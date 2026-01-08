@@ -1,0 +1,374 @@
+## 0) What you’re building (in one sentence)
+
+A “compliance command center” that turns messy driver/vehicle paperwork into a **single truth**: *who’s legal to operate today*, *what’s expiring soon*, and *what to fix next* — with **audit-ready evidence** and **no alert spam**.
+
+---
+
+## 1) Competitive landscape (what fleets actually use today)
+
+### What mid-sized fleets (15–50 trucks) commonly do **right now**
+
+They almost always run a **patchwork**:
+
+* **Google Drive / Dropbox + spreadsheets** (manual trackers + folders)
+* **ELD / telematics platform** (Samsara, Motive, Geotab, Omnitracs, etc.) for HOS + some document/qualification features
+* **“Compliance specialists”** for DQF / drug & alcohol / audit support (J. J. Keller, Foley, etc.)
+* **Inspection + maintenance tools** (Whip Around, Fleetio) for DVIRs, PM, inspection history
+
+### Where spreadsheets + Drive fail (even if used “perfectly”)
+
+* **No “current legality” signal**: A folder can be complete and still be expired.
+* **No proactive logic**: You have to *remember* to check expiration dates (the “paperwork time bomb”).
+* **No trustworthy audit trail**: Who uploaded/confirmed/changed what, and when?
+* **No operational coupling**: “Driver is expired” doesn’t automatically trigger *do not dispatch* workflows.
+* **No scalable retention rules**: HOS and supporting-doc retention has hard requirements (e.g., keep RODS + supporting docs **6 months**). ([FMCSA][1])
+
+### What mid-sized fleets feel is missing (the gap you can own)
+
+* A **simple Green/Yellow/Red** view across *drivers + vehicles* that is **always up to date**
+* **Expiration extraction** from PDFs/photos without manual typing
+* **Quiet, reliable reminders** (not “yet another notification system”)
+* **One-click audit packets** (exportable, complete, time-stamped)
+
+---
+
+## 1A) Competitor comparison table (required deliverable)
+
+> Pricing in this market is often **quote-based** or contract-dependent; when pricing isn’t published, I label it as “quote-based.” Where third parties estimate pricing, I flag it as *non-official*.
+
+| Tool                            |               Typical target fleet size | Key compliance-relevant features                                                                   | Pricing reality                                                                                               | Why mid-sized fleets get unhappy                                                                                                         |
+| ------------------------------- | --------------------------------------: | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| **Samsara**                     |                       20+ to enterprise | Qualifications alerts for driver/asset docs; telematics + ELD ecosystem ([Samsara Help Center][2]) | **Quote-based** on website flow ([Samsara][3]) (3rd-party estimates ~$27–$33/vehicle/mo vary) ([Capterra][4]) | Powerful but can feel like “buy the whole suite”; compliance view is often *one module among many*; setup/standardization work remains   |
+| **Motive (KeepTruckin)**        |                           small → large | Upload qualification docs; expiration alerts; workforce/qualifications tooling ([Motive][5])       | Pricing often varies; older tier references exist but may not reflect current contracts ([TechRadar][6])      | Great for ELD/telematics; doc compliance can still feel like “another page,” not the *command center*                                    |
+| **J. J. Keller Encompass**      |                        mid → enterprise | Broad safety/compliance platform (ELD, DVIR, compliance workflows) ([Encompass][7])                | **Explicitly contact sales**; subscription varies ([Encompass][8])                                            | Strong compliance DNA, but can be heavyweight; implementations can feel enterprise-y                                                     |
+| **Foley (Dash / Driver Files)** |                             small → mid | Digital DOT driver file management (DQF services + compliance support) ([Foley][9])                | Pricing page is **lead-form** (effectively quote-based) ([Foley][10])                                         | Often service-led; fleets still want a *daily operational dashboard* + alerts that match dispatch reality                                |
+| **Tenstreet DQF**               | mid → large (recruiting-heavy carriers) | DQF tracking, missing/expired doc logic, bulk MVR workflows ([Tenstreet][11])                      | Typically **demo/quote** (no public pricing on DQF page) ([Tenstreet][11])                                    | Great DQF focus, but not the full “driver+vehicle compliance command center”; can be overkill if you’re not using their recruiting stack |
+| **Whip Around**                 |                             small → mid | DOT-compliant inspection forms, photo capture, inspection history ([Capterra][12])                 | Pricing page exists but commonly tailored; third-party shows ~$5–$10 bands (not official) ([Whip Around][13]) | Excellent inspections, but not the end-to-end compliance dashboard (DQF, expirations, audit packets across everything)                   |
+| **Fleetio**                     |                             small → mid | Inspections + maintenance records; strong ops tooling ([Fleetio][14])                              | **Published** from ~$4/vehicle/mo (plan dependent) ([Fleetio][14])                                            | Great maintenance; not purpose-built for DOT DQF + “legal to drive” gating                                                               |
+| **Geotab**                      |                        mid → enterprise | Telematics, maintenance reminders, add-ins ([Geotab][15])                                          | Often reseller-priced; varies ([Tech.co][16])                                                                 | Strong platform, but compliance outcomes depend on configuration + process discipline                                                    |
+
+**Your wedge (in Dave-language):** “I don’t want *another system*. I want **one screen** that tells me: *who is legal today* and *what will make me illegal next week* — with proof.”
+
+---
+
+## 2) Audit readiness (what “audit-ready” means for an MVP)
+
+### What a DOT/FMCSA audit commonly demands access to (high-signal items)
+
+You don’t need to boil the ocean Day-1. Start with the files that create the most “oh no” risk:
+
+**A) Hours of Service evidence**
+
+* Retain **RODS + supporting documents for 6 months** ([FMCSA][1])
+
+**B) Vehicle inspection/maintenance records**
+
+* You must maintain inspection/repair/maintenance records and retain them (commonly **1 year while controlled**, plus **6 months after** it leaves your control). ([Legal Information Institute][17])
+* Annual/periodic inspection expectations (at least every 12 months) are highlighted in FMCSA safety-planner materials. ([CSA Compliance][18])
+
+**C) Driver Qualification File (DQF) completeness**
+DQF is where “paperwork time bomb” lives — annual checks, license/medical card, etc. A typical DQF checklist includes annual MVR/review and other required components. ([Tenstreet][11])
+
+### “Audit-ready” MVP definition (realistic)
+
+For Day-1, “audit-ready” should mean:
+
+* Every uploaded doc has: **type**, **owner** (driver/vehicle), **issue/expiration dates**, **source file**, **uploaded by**, **uploaded at**
+* Every extracted field has: **confidence** + **review status** (auto vs human-confirmed)
+* One-click exports:
+
+  * “All drivers: missing/expired/expiring soon”
+  * “Driver packet” (zip/pdf bundle + index CSV)
+  * “Vehicle packet” (same)
+
+That’s enough to *reduce audit panic* without building enterprise compliance suites.
+
+---
+
+## 3) OCR & Document AI options (2026) + safe handling (required deliverable)
+
+### Practical OCR options for a Day-1 MVP
+
+| Option                                  | Accuracy (real-world)              |                                                                                                 Pricing | Integration   | Best for MVP                                  |
+| --------------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------: | ------------- | --------------------------------------------- |
+| **Google Cloud Vision OCR**             | Very strong general OCR            |              First **1,000 units free/mo**, then **$1.50/1,000** (basic OCR tiers) ([Google Cloud][19]) | Easy API      | Best “fast and good enough” OCR backbone      |
+| **AWS Textract**                        | Strong, especially structured docs | Per-page pricing varies by feature; official pricing is feature-based ([Amazon Web Services, Inc.][20]) | Medium        | Good if you’re already AWS-first              |
+| **Azure Document Intelligence**         | Strong layout + extraction         |                        Azure has per-page pricing models (varies by model/tier) ([Microsoft Azure][21]) | Medium        | Good if you’re Microsoft ecosystem            |
+| **Google Document AI**                  | More “doc understanding”           |          Example: **$0.10 for 1–10 pages** in examples (processor/model dependent) ([Google Cloud][22]) | Medium        | Overkill Day-1 unless you need richer parsing |
+| **Open-source (Tesseract / PaddleOCR)** | Variable; depends on image quality |                                              Free (compute cost only); Apache 2.0 ([Tesseract OCR][23]) | Higher effort | Good later if cost/privacy push you on-prem   |
+
+### Recommended OCR strategy (required deliverable)
+
+**Primary (Day-1): Google Cloud Vision OCR**
+
+* Reason: cheapest “high trust” path to *working extraction fast* with low ops burden. ([Google Cloud][19])
+
+**Fallback strategy (human-in-the-loop)**
+
+* Any time the system is unsure, it should **ask for confirmation** (in your admin UI), not guess.
+* Store both:
+
+  1. the **raw OCR text**
+  2. the **final confirmed fields** (with reviewer + timestamp)
+
+**Confidence thresholds (simple + safe)**
+
+* **Document type classification**
+
+  * If confidence < **0.85** → “Needs Review: Document Type”
+* **Expiration date extraction**
+
+  * If no unambiguous date found OR confidence < **0.90** → “Needs Review: Expiration”
+* **Key identifiers** (license #, DOT #, VIN)
+
+  * If confidence < **0.92** → “Needs Review: Identifier”
+
+> The exact numeric thresholds are adjustable, but the principle is non-negotiable: **low confidence never auto-changes compliance status**.
+
+### Safe-to-cut corners at MVP (OCR edition)
+
+* Don’t build “perfect parsing.” Start with **10–15 doc types** you care about most (CDL, med card, insurance, registration, annual inspection, etc.).
+* Avoid handwriting Day-1 unless absolutely required.
+* No custom model training Day-1.
+
+---
+
+## 4) Alerts & notifications (email + SMS) without spam
+
+### Low-cost, low-hassle setup (early SaaS)
+
+* **Email**
+
+  * **Amazon SES** is extremely cheap ($0.10/1,000 emails) but more setup (DNS, reputation). ([Amazon Web Services, Inc.][24])
+  * **Resend** is very “developer-friendly,” generous free tier, quick setup. ([Resend][25])
+* **SMS**
+
+  * **Twilio** is the simplest default; US SMS starts around **$0.0083** send/receive. ([Twilio][26])
+  * AWS SNS can be cost-effective but has more moving parts; pricing details vary and require careful setup. ([Amazon Web Services, Inc.][27])
+
+### Best practices to avoid “alert fatigue” while staying valuable
+
+* **One “Daily Digest” by default** (Yellow items + new Reds), plus **immediate** alerts only for “Red = illegal to operate”
+* **Escalation ladder**
+
+  * T-30 days: email digest only
+  * T-14 days: email + optional SMS
+  * T-7 days: email + SMS
+  * Expired: immediate SMS + email to safety manager (and optionally dispatch)
+* **De-duplication**: never alert twice for the same doc within 24h unless status worsens.
+
+---
+
+## 5) MVP architecture (beginner-friendly) + recommended stack (required deliverable)
+
+### The simplest reliable MVP pipeline
+
+1. **Upload**
+
+   * User uploads PDF/photo → stored in object storage
+2. **Classify + Extract**
+
+   * OCR → text
+   * Extract expiration date + identifiers
+   * Assign doc to driver/vehicle
+3. **Review queue**
+
+   * If confidence low → human confirms fields
+4. **Status engine**
+
+   * Green/Yellow/Red computed from *confirmed* fields (or high-confidence auto fields)
+5. **Alerts**
+
+   * Scheduled job runs daily + event-triggered on “Red”
+6. **Audit export**
+
+   * Driver packet + Vehicle packet + CSV index
+
+### Recommended MVP tech stack (vibe-coder friendly)
+
+| Layer              | Recommended                                            | Why                                                    | Alternatives                                                     |
+| ------------------ | ------------------------------------------------------ | ------------------------------------------------------ | ---------------------------------------------------------------- |
+| Frontend + Backend | **Next.js** (single repo)                              | Fast iteration, huge ecosystem                         | Remix, Laravel                                                   |
+| Auth               | **Supabase Auth**                                      | Simple, integrated                                     | Clerk                                                            |
+| Database           | **Postgres (Supabase)**                                | Relational + reliable                                  | Neon                                                             |
+| File storage       | **Supabase Storage** (or S3/R2 later)                  | “Good enough” Day-1                                    | S3, Cloudflare R2                                                |
+| Background jobs    | **Inngest**-style workflow (or Supabase cron + worker) | Retries + visibility                                   | Trigger.dev, BullMQ                                              |
+| Hosting            | **Vercel** (frontend) + Supabase                       | Low ops burden                                         | Render, Fly.io                                                   |
+| OCR                | **Google Vision OCR**                                  | Fast, strong, cheap at MVP volume ([Google Cloud][19]) | Textract ([Amazon Web Services, Inc.][20])                       |
+| Email              | **Resend** (fast) → SES later                          | Low friction                                           | SES ([Amazon Web Services, Inc.][24]), Postmark ([Postmark][28]) |
+| SMS                | **Twilio**                                             | Dead simple; predictable cost ([Twilio][26])           | AWS SNS ([Amazon Web Services, Inc.][27])                        |
+
+### Estimated monthly cost (MVP scale)
+
+* **Best-case** (low volume): ~$20–$80/mo
+* **Worst-case within your budget** (more docs + SMS): ~$120–$200/mo
+  (Full breakdown in Section 10.)
+
+---
+
+## 6) MVP feature scope (required deliverable)
+
+### Must-have (Day-1)
+
+* Upload PDFs/photos
+* Doc type + expiration extraction + manual review queue
+* Driver/Vehicle profile pages with doc list
+* Green/Yellow/Red logic
+* Email + SMS alerts with escalation
+* Audit export (packet + CSV index)
+* Full audit trail (who/when)
+
+### Explicitly defer (say “no” on purpose)
+
+* Driver mobile app
+* Deep integrations (ELD/TMS APIs)
+* Automated “dispatch block” enforcement
+* Custom model training
+* Multi-tenant enterprise controls (SSO, RBAC granularity)
+* Complex workflows (e.g., multi-step approvals)
+
+---
+
+## 7) Pricing & monetization (simple, trust-based)
+
+### What “cheap vs expensive” feels like in this category
+
+* Telematics suites often land around **tens of dollars per vehicle/month** in common market discussions (and can be contract-based). ([Capterra][4])
+* Maintenance/inspection-only tools can be **single-digit $/vehicle/month** (Fleetio published: ~$4/vehicle/mo entry plan). ([Fleetio][14])
+
+### Suggested MVP pricing tiers (keep it dead simple)
+
+* **Starter** (up to 15 trucks): **$99/mo**
+* **Growth** (16–50 trucks): **$199/mo**
+* Add-on: **SMS pack** (e.g., $20/mo includes X messages; overage pass-through)
+
+Positioning: You’re selling **10 hours/week back + “I can sleep” peace of mind**, not OCR.
+
+---
+
+## 8) AI acceleration (how to use AI without sacrificing trust)
+
+Where AI helps most (fast + safe):
+
+* **Generate schemas + migrations** (drivers, vehicles, documents, events)
+* **Document classification** from OCR text (with confidence)
+* **Field extraction** (expiration date, doc ID) with structured output
+* **Validation**: AI proposes; system enforces rules (“date must be future,” “CDL format,” etc.)
+* **UI copy + onboarding checklists** (reduce time to usable)
+
+Rule: AI can suggest; **only deterministic logic (or human confirmation) changes compliance status**.
+
+---
+
+## 9) Development roadmap (Weeks 1–6) (required deliverable)
+
+### Week 1 — “Upload works”
+
+* Auth + org setup
+* Driver/Vehicle tables
+* File upload + storage
+* Basic document list UI
+
+### Week 2 — “OCR + extraction works”
+
+* OCR pipeline (Vision)
+* Extract expiration date + doc type
+* Admin “Review Queue”
+* Store OCR text + extracted fields + confidence
+
+### Week 3 — “Demo-ready command center”
+
+* Green/Yellow/Red dashboard
+* Driver packet export (zip + CSV index)
+* Basic alert rules (email only)
+* Seed with realistic sample docs
+
+### Week 4 — “First real fleet onboarding”
+
+* Better doc templates (top 10–15 doc types)
+* SMS integration + escalation ladder
+* Activity log (“who changed what”)
+
+### Week 5 — “Trust hardening”
+
+* Retry logic + job visibility
+* “No low-confidence auto-red” safeguards
+* Bulk import (CSV driver list)
+
+### Week 6 — “Convert to paid”
+
+* Billing + plans
+* Polished onboarding checklist
+* “Audit mode” export improvements
+
+---
+
+## 10) Budget breakdown (best-case vs worst-case) (required deliverable)
+
+### Best-case MVP (low volume, few alerts)
+
+* Hosting (Vercel) + DB (Supabase): **$20–$60**
+* OCR: **$0–$10** (first 1,000 units free on Vision OCR) ([Google Cloud][19])
+* Email: **$0–$20** (Resend free/low tier) ([Resend][25])
+* SMS: **$5–$20** (Twilio, low volume) ([Twilio][26])
+  **Total:** **~$25–$110/mo**
+
+### Worst-case MVP (heavier docs + more SMS)
+
+* Hosting + DB: **$60–$120**
+* OCR: **$20–$80**
+* Email: **$20**
+* SMS: **$30–$80**
+  **Total:** **~$130–$200/mo**
+
+---
+
+## Key source links (as requested)
+
+```text
+FMCSA supporting documents (HOS): https://www.fmcsa.dot.gov/hours-service/elds/supporting-documents
+FMCSA retention guidance (RODS 6 months): https://www.fmcsa.dot.gov/hours-service/elds/how-long-must-motor-carrier-retain-electronic-logging-device-eld-record-duty
+Vehicle maintenance recordkeeping (FMCSA): https://www.fmcsa.dot.gov/safety/passenger-safety/inspection-repair-and-maintenance-motor-carriers-passengers-part-396
+Cornell CFR 49 396.3 (retention language): https://www.law.cornell.edu/cfr/text/49/396.3
+Google Vision OCR pricing: https://cloud.google.com/vision/pricing
+AWS Textract pricing: https://aws.amazon.com/textract/pricing/
+Twilio SMS pricing (US): https://www.twilio.com/en-us/sms/pricing/us
+Amazon SES pricing: https://aws.amazon.com/ses/pricing/
+Fleetio pricing: https://www.fleetio.com/pricing
+Samsara qualifications alerts (docs): https://kb.samsara.com/hc/en-us/articles/33888131337741-Qualifications-Management
+Motive qualifications docs + alerts (docs): https://helpcenter.gomotive.com/
+```
+
+---
+
+* [TechRadar](https://www.techradar.com/reviews/motive-fleet-management?utm_source=chatgpt.com)
+* [TechRadar](https://www.techradar.com/pro/software-services/azuga-review?utm_source=chatgpt.com)
+
+[1]: https://www.fmcsa.dot.gov/hours-service/elds/how-long-must-motor-carrier-retain-electronic-logging-device-eld-record-duty?utm_source=chatgpt.com "How long must a motor carrier retain electronic logging device ..."
+[2]: https://kb.samsara.com/hc/en-us/articles/33888131337741-Qualifications-Management?utm_source=chatgpt.com "Qualifications Management"
+[3]: https://www.samsara.com/pricing?utm_source=chatgpt.com "Pricing"
+[4]: https://www.capterra.com/p/167543/Samsara-for-Fleets-0-00-6-23/?utm_source=chatgpt.com "Samsara Software 2026: Features, Integrations, Pros & Cons"
+[5]: https://gomotive.com/products/workforce-management/?utm_source=chatgpt.com "Fleet Workforce Management Software & Solutions"
+[6]: https://www.techradar.com/reviews/motive-fleet-management?utm_source=chatgpt.com "Motive fleet management review"
+[7]: https://eld.kellerencompass.com/?utm_source=chatgpt.com "J. J. Keller Encompass: Encompass Fleet Safety ..."
+[8]: https://eld.kellerencompass.com/support/customer-support?utm_source=chatgpt.com "Customer Support"
+[9]: https://www.foley.io/compliance/driver-files/?utm_source=chatgpt.com "DOT Driver Qualification File Management Software"
+[10]: https://www.foley.io/pricing?utm_source=chatgpt.com "Platform Pricing"
+[11]: https://www.tenstreet.com/software/dqf?utm_source=chatgpt.com "Driver Qualification Files: DOT & FMCSA Checklists & Forms"
+[12]: https://www.capterra.com/p/148935/Whip-Around/?utm_source=chatgpt.com "Whip Around Software Pricing, Alternatives & More 2026"
+[13]: https://whiparound.com/pricing/?utm_source=chatgpt.com "Whip Around Pricing Plans for Fleet Businesses"
+[14]: https://www.fleetio.com/pricing?utm_source=chatgpt.com "Fleetio Pricing & Plans - Fleet Management Software"
+[15]: https://www.geotab.com/software-packages/?utm_source=chatgpt.com "Software Packages"
+[16]: https://tech.co/fleet-management/geotab-review-fleet-management?utm_source=chatgpt.com "Geotab Review & Pricing Guide 2026 - Fleet Management"
+[17]: https://www.law.cornell.edu/cfr/text/49/396.3?utm_source=chatgpt.com "49 CFR § 396.3 - Inspection, repair, and maintenance."
+[18]: https://csa.fmcsa.dot.gov/safetyplanner/MyFiles/SubSections.aspx?ch=22&sec=65&sub=148&utm_source=chatgpt.com "5.2.2 Vehicle Inspections - CSA - Department of Transportation"
+[19]: https://cloud.google.com/vision/pricing?utm_source=chatgpt.com "Pricing | Cloud Vision API"
+[20]: https://aws.amazon.com/textract/pricing/?utm_source=chatgpt.com "Textract Pricing Page"
+[21]: https://azure.microsoft.com/en-us/pricing/details/ai-document-intelligence/?utm_source=chatgpt.com "Azure Document Intelligence in Foundry Tools pricing"
+[22]: https://cloud.google.com/document-ai/pricing?utm_source=chatgpt.com "Document AI pricing"
+[23]: https://tesseract-ocr.github.io/tessdoc/Installation.html?utm_source=chatgpt.com "Introduction | tessdoc - Tesseract documentation"
+[24]: https://aws.amazon.com/ses/pricing/?utm_source=chatgpt.com "Amazon SES Pricing"
+[25]: https://resend.com/pricing?utm_source=chatgpt.com "Pricing"
+[26]: https://www.twilio.com/en-us/sms/pricing/us?utm_source=chatgpt.com "SMS Pricing in United States for Text Messaging"
+[27]: https://aws.amazon.com/sns/pricing/?utm_source=chatgpt.com "Amazon SNS pricing"
+[28]: https://postmarkapp.com/pricing?utm_source=chatgpt.com "Postmark Pricing and Free Trial"
