@@ -3,6 +3,7 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import DriverForm from "../DriverForm";
 import DocumentsSection from "@/components/DocumentsSection";
+import ExportButton from "@/components/ExportButton";
 
 export default async function EditDriverPage({
   params,
@@ -57,6 +58,13 @@ export default async function EditDriverPage({
               <h1 className="text-3xl font-bold tracking-tight text-gray-900">
                 {driver.name}
               </h1>
+            </div>
+            <div>
+              <ExportButton
+                entityType="driver"
+                entityId={driver.id}
+                entityName={driver.name}
+              />
             </div>
           </div>
         </div>

@@ -3,6 +3,7 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import VehicleForm from "../VehicleForm";
 import DocumentsSection from "@/components/DocumentsSection";
+import ExportButton from "@/components/ExportButton";
 
 export default async function EditVehiclePage({
   params,
@@ -57,6 +58,13 @@ export default async function EditVehiclePage({
               <h1 className="text-3xl font-bold tracking-tight text-gray-900">
                 {vehicle.unit_number}
               </h1>
+            </div>
+            <div>
+              <ExportButton
+                entityType="vehicle"
+                entityId={vehicle.id}
+                entityName={vehicle.unit_number}
+              />
             </div>
           </div>
         </div>
