@@ -46,11 +46,14 @@ export default function VehicleForm({ fleetId, vehicle }: VehicleFormProps) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          ...formData,
-          year: formData.year ? parseInt(formData.year) : null,
-          fleet_id: fleetId,
-        }),
+      body: JSON.stringify({
+        unit_number: formData.unit_number,
+        vin: formData.vin,
+        make: formData.make,
+        model: formData.model,
+        year: formData.year ? parseInt(formData.year) : null,
+        fleet_id: fleetId,
+      }),
       });
 
       const data = await response.json();
@@ -170,23 +173,21 @@ export default function VehicleForm({ fleetId, vehicle }: VehicleFormProps) {
             htmlFor="status"
             className="block text-sm font-medium text-gray-700"
           >
-            Status
+            Status (Auto-calculated)
           </label>
           <select
             id="status"
             value={formData.status}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                status: e.target.value as "green" | "yellow" | "red",
-              })
-            }
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
+            disabled
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm bg-gray-50 text-gray-600 cursor-not-allowed sm:text-sm px-3 py-2 border"
           >
             <option value="green">Road Ready</option>
             <option value="yellow">Expiring Soon</option>
             <option value="red">Not Road Ready</option>
           </select>
+          <p className="mt-1 text-xs text-gray-500">
+            Status is automatically calculated based on required documents and expiration dates.
+          </p>
         </div>
 
         {error && (

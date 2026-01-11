@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { updateEntityStatus } from "@/lib/statusEngine";
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -13,7 +14,7 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { fleet_id, name, email, phone, cdl_number, status } = body;
+  const { fleet_id, name, email, phone, cdl_number } = body;
 
   // Verify fleet ownership
   const { data: fleet } = await supabase
@@ -27,6 +28,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Fleet not found" }, { status: 404 });
   }
 
+  // Create driver (status will be calculated)
   const { data, error } = await supabase
     .from("drivers")
     .insert({
@@ -35,7 +37,7 @@ export async function POST(request: Request) {
       email: email || null,
       phone: phone || null,
       cdl_number: cdl_number || null,
-      status: status || "green",
+      status: "red", // Default to red (will be recalculated if documents exist)
     })
     .select()
     .single();
@@ -44,5 +46,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 
-  return NextResponse.json(data);
+  // Recalculate status based on documents (may still be red if no docs)
+  try {
+    await updateEntityStatus("driver", data.id, fleet_id);
+    
+    // Re-fetch updated driver
+    const { data: updatedDriver } = await supabase
+      .from("drivers")
+      .select("*")
+      .eq("id", data.id)
+      .single();
+    
+    return NextResponse.json(updatedDriver || data);
+  } catch (statusError) {
+    // If status calculation fails, return driver anyway (status will be red)
+    console.error("Failed to calculate driver status:", statusError);
+    return NextResponse.json(data);
+  }
 }

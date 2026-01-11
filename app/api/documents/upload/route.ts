@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { uploadFile } from "@/lib/storage";
+import { updateEntityStatus } from "@/lib/statusEngine";
 
 export async function POST(request: NextRequest) {
   try {
@@ -178,6 +179,18 @@ export async function POST(request: NextRequest) {
         { error: `Failed to save document: ${docError.message}` },
         { status: 500 }
       );
+    }
+
+    // Recalculate entity status based on all documents
+    try {
+      await updateEntityStatus(
+        entityType as "driver" | "vehicle",
+        entityId,
+        fleet.id
+      );
+    } catch (statusError) {
+      // Log but don't fail - document was uploaded successfully
+      console.error("Failed to recalculate entity status:", statusError);
     }
 
     return NextResponse.json({ document }, { status: 201 });

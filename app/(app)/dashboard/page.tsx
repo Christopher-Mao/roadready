@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import DashboardClient from "./DashboardClient";
+import { updateEntityStatus } from "@/lib/statusEngine";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -57,7 +58,57 @@ export default async function DashboardPage() {
   const drivers = driversResult.data || [];
   const vehicles = vehiclesResult.data || [];
 
-  // Calculate stats
+  // Recalculate statuses for all entities to ensure accuracy
+  // (In production, this could be optimized with caching or async recalculation)
+  if (fleetId) {
+    await Promise.all([
+      ...drivers.map((driver) =>
+        updateEntityStatus("driver", driver.id, fleetId).catch((err) => {
+          console.error(`Failed to recalculate status for driver ${driver.id}:`, err);
+        })
+      ),
+      ...vehicles.map((vehicle) =>
+        updateEntityStatus("vehicle", vehicle.id, fleetId).catch((err) => {
+          console.error(`Failed to recalculate status for vehicle ${vehicle.id}:`, err);
+        })
+      ),
+    ]);
+
+    // Re-fetch updated statuses
+    const [updatedDriversResult, updatedVehiclesResult] = await Promise.all([
+      supabase
+        .from("drivers")
+        .select("id, status")
+        .eq("fleet_id", fleetId),
+      supabase
+        .from("vehicles")
+        .select("id, status")
+        .eq("fleet_id", fleetId),
+    ]);
+
+    const updatedDrivers = updatedDriversResult.data || [];
+    const updatedVehicles = updatedVehiclesResult.data || [];
+
+    // Calculate stats from updated data
+    const allEntities = [...updatedDrivers, ...updatedVehicles];
+    const stats = {
+      green: allEntities.filter((e) => e.status === "green").length,
+      yellow: allEntities.filter((e) => e.status === "yellow").length,
+      red: allEntities.filter((e) => e.status === "red").length,
+      total: allEntities.length,
+    };
+
+    return (
+      <DashboardClient
+        fleetName={fleet?.name || "My Fleet"}
+        stats={stats}
+        driverCount={updatedDrivers.length}
+        vehicleCount={updatedVehicles.length}
+      />
+    );
+  }
+
+  // Fallback (shouldn't happen, but just in case)
   const allEntities = [...drivers, ...vehicles];
   const stats = {
     green: allEntities.filter((e) => e.status === "green").length,

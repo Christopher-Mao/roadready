@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { deleteFile, getSignedUrl } from "@/lib/storage";
+import { updateEntityStatus } from "@/lib/statusEngine";
 
 // GET /api/documents/[id] - Get document with signed URL
 export async function GET(
@@ -165,6 +166,18 @@ export async function PUT(
       );
     }
 
+    // Recalculate entity status based on all documents
+    try {
+      await updateEntityStatus(
+        existingDoc.entity_type as "driver" | "vehicle",
+        existingDoc.entity_id,
+        fleet.id
+      );
+    } catch (statusError) {
+      // Log but don't fail - document was updated successfully
+      console.error("Failed to recalculate entity status:", statusError);
+    }
+
     return NextResponse.json({ document });
   } catch (error: any) {
     console.error("Update document error:", error);
@@ -240,6 +253,18 @@ export async function DELETE(
         { error: `Failed to delete document: ${deleteError.message}` },
         { status: 500 }
       );
+    }
+
+    // Recalculate entity status based on remaining documents
+    try {
+      await updateEntityStatus(
+        document.entity_type as "driver" | "vehicle",
+        document.entity_id,
+        fleet.id
+      );
+    } catch (statusError) {
+      // Log but don't fail - document was deleted successfully
+      console.error("Failed to recalculate entity status:", statusError);
     }
 
     return NextResponse.json({ success: true });

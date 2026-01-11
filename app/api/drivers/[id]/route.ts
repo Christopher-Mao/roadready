@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { updateEntityStatus } from "@/lib/statusEngine";
 
 export async function PUT(
   request: Request,
@@ -16,7 +17,7 @@ export async function PUT(
   }
 
   const body = await request.json();
-  const { name, email, phone, cdl_number, status } = body;
+  const { name, email, phone, cdl_number } = body;
 
   // Verify driver ownership through fleet
   const { data: driver } = await supabase
@@ -41,6 +42,7 @@ export async function PUT(
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
+  // Update driver (status ignored - will be recalculated)
   const { data, error } = await supabase
     .from("drivers")
     .update({
@@ -48,7 +50,6 @@ export async function PUT(
       email: email || null,
       phone: phone || null,
       cdl_number: cdl_number || null,
-      status: status || "green",
       updated_at: new Date().toISOString(),
     })
     .eq("id", params.id)
@@ -59,7 +60,23 @@ export async function PUT(
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 
-  return NextResponse.json(data);
+  // Recalculate status based on documents
+  try {
+    await updateEntityStatus("driver", params.id, driver.fleet_id);
+    
+    // Re-fetch updated driver
+    const { data: updatedDriver } = await supabase
+      .from("drivers")
+      .select("*")
+      .eq("id", params.id)
+      .single();
+    
+    return NextResponse.json(updatedDriver || data);
+  } catch (statusError) {
+    // If status calculation fails, return driver anyway
+    console.error("Failed to calculate driver status:", statusError);
+    return NextResponse.json(data);
+  }
 }
 
 export async function DELETE(

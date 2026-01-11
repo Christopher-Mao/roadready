@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { updateEntityStatus } from "@/lib/statusEngine";
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -13,7 +14,7 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { fleet_id, unit_number, vin, make, model, year, status } = body;
+  const { fleet_id, unit_number, vin, make, model, year } = body;
 
   // Verify fleet ownership
   const { data: fleet } = await supabase
@@ -27,6 +28,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Fleet not found" }, { status: 404 });
   }
 
+  // Create vehicle (status will be calculated)
   const { data, error } = await supabase
     .from("vehicles")
     .insert({
@@ -36,7 +38,7 @@ export async function POST(request: Request) {
       make: make || null,
       model: model || null,
       year: year || null,
-      status: status || "green",
+      status: "red", // Default to red (will be recalculated if documents exist)
     })
     .select()
     .single();
@@ -45,5 +47,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 
-  return NextResponse.json(data);
+  // Recalculate status based on documents (may still be red if no docs)
+  try {
+    await updateEntityStatus("vehicle", data.id, fleet_id);
+    
+    // Re-fetch updated vehicle
+    const { data: updatedVehicle } = await supabase
+      .from("vehicles")
+      .select("*")
+      .eq("id", data.id)
+      .single();
+    
+    return NextResponse.json(updatedVehicle || data);
+  } catch (statusError) {
+    // If status calculation fails, return vehicle anyway (status will be red)
+    console.error("Failed to calculate vehicle status:", statusError);
+    return NextResponse.json(data);
+  }
 }

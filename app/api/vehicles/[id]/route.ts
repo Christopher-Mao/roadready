@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { updateEntityStatus } from "@/lib/statusEngine";
 
 export async function PUT(
   request: Request,
@@ -16,7 +17,7 @@ export async function PUT(
   }
 
   const body = await request.json();
-  const { unit_number, vin, make, model, year, status } = body;
+  const { unit_number, vin, make, model, year } = body;
 
   // Verify vehicle ownership through fleet
   const { data: vehicle } = await supabase
@@ -41,6 +42,7 @@ export async function PUT(
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
+  // Update vehicle (status ignored - will be recalculated)
   const { data, error } = await supabase
     .from("vehicles")
     .update({
@@ -49,7 +51,6 @@ export async function PUT(
       make: make || null,
       model: model || null,
       year: year || null,
-      status: status || "green",
       updated_at: new Date().toISOString(),
     })
     .eq("id", params.id)
@@ -60,7 +61,23 @@ export async function PUT(
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 
-  return NextResponse.json(data);
+  // Recalculate status based on documents
+  try {
+    await updateEntityStatus("vehicle", params.id, vehicle.fleet_id);
+    
+    // Re-fetch updated vehicle
+    const { data: updatedVehicle } = await supabase
+      .from("vehicles")
+      .select("*")
+      .eq("id", params.id)
+      .single();
+    
+    return NextResponse.json(updatedVehicle || data);
+  } catch (statusError) {
+    // If status calculation fails, return vehicle anyway
+    console.error("Failed to calculate vehicle status:", statusError);
+    return NextResponse.json(data);
+  }
 }
 
 export async function DELETE(
