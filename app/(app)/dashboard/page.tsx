@@ -47,11 +47,11 @@ export default async function DashboardPage() {
   const [driversResult, vehiclesResult] = await Promise.all([
     supabase
       .from("drivers")
-      .select("id, status")
+      .select("id, name, status")
       .eq("fleet_id", fleetId),
     supabase
       .from("vehicles")
-      .select("id, status")
+      .select("id, unit_number, status")
       .eq("fleet_id", fleetId),
   ]);
 
@@ -98,12 +98,26 @@ export default async function DashboardPage() {
       total: allEntities.length,
     };
 
+    // Re-fetch full data for display
+    const [fullDriversResult, fullVehiclesResult] = await Promise.all([
+      supabase
+        .from("drivers")
+        .select("id, name, status")
+        .eq("fleet_id", fleetId),
+      supabase
+        .from("vehicles")
+        .select("id, unit_number, status")
+        .eq("fleet_id", fleetId),
+    ]);
+
     return (
       <DashboardClient
         fleetName={fleet?.name || "My Fleet"}
         stats={stats}
         driverCount={updatedDrivers.length}
         vehicleCount={updatedVehicles.length}
+        drivers={fullDriversResult.data || []}
+        vehicles={fullVehiclesResult.data || []}
       />
     );
   }
@@ -123,6 +137,8 @@ export default async function DashboardPage() {
       stats={stats}
       driverCount={drivers.length}
       vehicleCount={vehicles.length}
+      drivers={drivers}
+      vehicles={vehicles}
     />
   );
 }

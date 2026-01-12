@@ -115,7 +115,7 @@ export async function PUT(
 
     // Parse request body
     const body = await request.json();
-    const { docType, expiresOn } = body;
+    const { docType, expiresOn, needsReview } = body;
 
     // Prepare update object
     const updates: any = {
@@ -128,6 +128,11 @@ export async function PUT(
 
     if (expiresOn !== undefined) {
       updates.expires_on = expiresOn || null;
+    }
+
+    if (needsReview !== undefined) {
+      updates.needs_review = needsReview;
+    }
 
       // Recalculate status based on expiration date
       if (expiresOn) {

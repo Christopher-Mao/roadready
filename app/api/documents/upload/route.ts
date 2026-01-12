@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { uploadFile } from "@/lib/storage";
 import { updateEntityStatus } from "@/lib/statusEngine";
+import { extractDocumentInfo } from "@/lib/ai/documentExtraction";
 
 export async function POST(request: NextRequest) {
   try {
@@ -37,6 +38,7 @@ export async function POST(request: NextRequest) {
     const entityId = formData.get("entityId") as string;
     const docType = formData.get("docType") as string;
     const expiresOn = formData.get("expiresOn") as string | null;
+    const useAI = formData.get("useAI") === "true"; // Optional: enable AI extraction
 
     // Validate inputs
     if (!file) {
@@ -60,7 +62,48 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!docType) {
+    // AI extraction (optional - if enabled and docType not provided)
+    // Note: If user provides docType manually, we respect that and don't override with AI
+    let aiExtraction: {
+      docType: string | null;
+      expiresOn: string | null;
+      confidence: number;
+      needsReview: boolean;
+      reasoning?: string;
+    } | null = null;
+
+    let finalDocType = docType;
+    let finalExpiresOn = expiresOn;
+    let needsReview = false;
+
+    // If AI is enabled and docType is not provided, try AI extraction
+    // If user manually entered docType, we still allow AI to suggest expiration date
+    if (useAI) {
+      try {
+        aiExtraction = await extractDocumentInfo(file, file.name);
+        
+        // Only use AI docType if user didn't provide one
+        if (!docType && aiExtraction.docType) {
+          finalDocType = aiExtraction.docType;
+        }
+        
+        // Use AI expiration date if user didn't provide one, or if AI found one and user didn't
+        if (!expiresOn && aiExtraction.expiresOn) {
+          finalExpiresOn = aiExtraction.expiresOn;
+        }
+        
+        // Set needs_review if AI confidence is low
+        if (aiExtraction.needsReview) {
+          needsReview = true;
+        }
+      } catch (aiError: any) {
+        console.error("AI extraction error:", aiError);
+        // Continue with manual entry if AI fails
+      }
+    }
+
+    // If docType is still missing, require it
+    if (!finalDocType) {
       return NextResponse.json(
         { error: "Document type is required" },
         { status: 400 }
@@ -133,9 +176,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Calculate initial status
+    // IMPORTANT: If needs_review is true, don't auto-set to red (trust rule)
     let status: "green" | "yellow" | "red" = "green";
-    if (expiresOn) {
-      const expirationDate = new Date(expiresOn);
+    if (finalExpiresOn) {
+      const expirationDate = new Date(finalExpiresOn);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const daysUntilExpiration = Math.ceil(
@@ -143,11 +187,16 @@ export async function POST(request: NextRequest) {
       );
 
       if (daysUntilExpiration < 0) {
-        status = "red"; // Expired
+        // Only set to red if we're confident (not needs_review)
+        status = needsReview ? "yellow" : "red"; // Expired
       } else if (daysUntilExpiration <= 30) {
         status = "yellow"; // Expiring soon
       }
     }
+
+    // Determine processing status
+    // If IRP_CAB_CARD, set to processing (will be processed async)
+    const processingStatus = finalDocType === "IRP_CAB_CARD" ? "processing" : "complete";
 
     // Save document record
     const { data: document, error: docError } = await supabase
@@ -156,10 +205,13 @@ export async function POST(request: NextRequest) {
         fleet_id: fleet.id,
         entity_type: entityType,
         entity_id: entityId,
-        doc_type: docType,
+        doc_type: finalDocType,
         file_path: filePath,
-        expires_on: expiresOn || null,
+        expires_on: finalExpiresOn || null,
+        expiration_date: finalExpiresOn || null,
         status: status,
+        processing_status: processingStatus,
+        needs_review: needsReview,
         uploaded_by: user.id,
       })
       .select()
@@ -181,19 +233,46 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Recalculate entity status based on all documents
-    try {
-      await updateEntityStatus(
-        entityType as "driver" | "vehicle",
-        entityId,
-        fleet.id
-      );
-    } catch (statusError) {
-      // Log but don't fail - document was uploaded successfully
-      console.error("Failed to recalculate entity status:", statusError);
+    // If IRP_CAB_CARD, trigger processing
+    if (finalDocType === "IRP_CAB_CARD" && document) {
+      // Process asynchronously (don't wait)
+      fetch(`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/documents/process/${document.id}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }).catch((err) => {
+        console.error("Failed to trigger document processing:", err);
+        // Don't fail the upload if processing trigger fails
+      });
+    } else {
+      // Recalculate entity status for non-IRP documents
+      try {
+        await updateEntityStatus(
+          entityType as "driver" | "vehicle",
+          entityId,
+          fleet.id
+        );
+      } catch (statusError) {
+        // Log but don't fail - document was uploaded successfully
+        console.error("Failed to recalculate entity status:", statusError);
+      }
     }
 
-    return NextResponse.json({ document }, { status: 201 });
+    return NextResponse.json(
+      {
+        document,
+        aiExtraction: aiExtraction
+          ? {
+              confidence: aiExtraction.confidence,
+              needsReview: aiExtraction.needsReview,
+              reasoning: aiExtraction.reasoning,
+            }
+          : null,
+        processing: finalDocType === "IRP_CAB_CARD" ? "queued" : null,
+      },
+      { status: 201 }
+    );
   } catch (error: any) {
     console.error("Document upload error:", error);
     return NextResponse.json(

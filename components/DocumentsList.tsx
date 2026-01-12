@@ -1,13 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import StatusBadge from "./StatusBadge";
 
 interface Document {
   id: string;
   doc_type: string;
   expires_on: string | null;
+  expiration_date: string | null;
   status: "green" | "yellow" | "red";
+  processing_status: string | null;
   uploaded_at: string;
   file_path: string;
 }
@@ -232,17 +235,25 @@ export default function DocumentsList({
                     ) : (
                       <div
                         className={`text-sm ${
-                          isExpired(doc.expires_on)
+                          isExpired(doc.expiration_date || doc.expires_on)
                             ? "text-red-600 font-semibold"
                             : "text-gray-500"
                         }`}
                       >
-                        {formatDate(doc.expires_on)}
+                        {formatDate(doc.expiration_date || doc.expires_on)}
                       </div>
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <StatusBadge status={doc.status} size="sm" />
+                    <div className="flex items-center gap-2">
+                      <StatusBadge status={doc.status} size="sm" />
+                      {doc.processing_status === "processing" && (
+                        <span className="text-xs text-blue-600">Processing...</span>
+                      )}
+                      {doc.processing_status === "needs_review" && (
+                        <span className="text-xs text-yellow-600">Review</span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {new Date(doc.uploaded_at).toLocaleDateString()}
@@ -265,12 +276,21 @@ export default function DocumentsList({
                       </div>
                     ) : (
                       <div className="flex justify-end gap-3">
-                        <button
-                          onClick={() => handleView(doc.id)}
-                          className="text-blue-600 hover:text-blue-900"
-                        >
-                          View
-                        </button>
+                        {doc.doc_type === "IRP_CAB_CARD" ? (
+                          <Link
+                            href={`/documents/${doc.id}`}
+                            className="text-blue-600 hover:text-blue-900"
+                          >
+                            View Details
+                          </Link>
+                        ) : (
+                          <button
+                            onClick={() => handleView(doc.id)}
+                            className="text-blue-600 hover:text-blue-900"
+                          >
+                            View
+                          </button>
+                        )}
                         <button
                           onClick={() => handleEdit(doc)}
                           className="text-gray-600 hover:text-gray-900"

@@ -23,7 +23,7 @@ export async function sendSMSAlert(params: SMSAlertParams): Promise<{
   const fromNumber = process.env.TWILIO_FROM_NUMBER;
 
   if (!accountSid || !authToken || !fromNumber) {
-    console.error("Twilio credentials not configured");
+    console.warn("Twilio credentials not configured - SMS will not be sent, but alert will be logged");
     return {
       success: false,
       error: "SMS service not configured",

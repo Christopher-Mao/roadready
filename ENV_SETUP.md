@@ -21,6 +21,15 @@ RESEND_API_KEY=re_your_api_key
 TWILIO_ACCOUNT_SID=your_account_sid
 TWILIO_AUTH_TOKEN=your_auth_token
 TWILIO_FROM_NUMBER=+1234567890
+
+# OpenAI (AI Document Extraction - Optional)
+# Get your API key from: https://platform.openai.com/api-keys
+# If not set, AI extraction will be disabled and manual entry will be required
+OPENAI_API_KEY=sk-your-api-key
+
+# Vercel Cron (Optional - for background jobs)
+# Generate a secure random string: openssl rand -hex 32
+CRON_SECRET=your-secure-random-string
 ```
 
 ## Setup Instructions

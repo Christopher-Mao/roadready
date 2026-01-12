@@ -23,8 +23,8 @@
 
 ## 🔄 Current State (Update This!)
 **Last Updated:** 2026-01-07  
-**Working On:** Phase 1 — repo setup + Supabase wiring + basic CRUD  
-**Recently Completed:** Instruction system created (AGENTS + docs)  
+**Working On:** Phase 3 — Trust Hardening (Complete!)  
+**Recently Completed:** Phase 2 & Phase 3 — All MVP features implemented  
 **Blocked By:** None
 
 ## 🚀 Roadmap
@@ -37,16 +37,16 @@
 - [ ] Storage bucket for uploads (private) + signed URL access
 
 ### Phase 2: Core Features (MVP value)
-- [ ] Document upload (PDF/images) + attach to driver/vehicle
-- [ ] Document “understanding” (MVP-safe): manual entry first, AI suggests later
-- [ ] Green/Yellow/Red dashboard with filters (drivers/vehicles, expiring, expired)
-- [ ] Alerts: email + SMS (Dave-only to start)
-- [ ] Audit-ready export: per driver/vehicle (CSV + doc list + timestamps)
+- [x] Document upload (PDF/images) + attach to driver/vehicle
+- [x] Document "understanding" (MVP-safe): manual entry first, AI suggests later
+- [x] Green/Yellow/Red dashboard with filters (drivers/vehicles, expiring, expired)
+- [x] Alerts: email + SMS (Dave-only to start)
+- [x] Audit-ready export: per driver/vehicle (CSV + doc list + timestamps)
 
 ### Phase 3: Trust Hardening (still MVP)
-- [ ] Review Queue for low-confidence extraction (no auto-red from low confidence)
-- [ ] Audit trail (document changes + alert logs)
-- [ ] Retry logic for background job + basic monitoring
+- [x] Review Queue for low-confidence extraction (no auto-red from low confidence)
+- [x] Audit trail (document changes + alert logs)
+- [x] Retry logic for background job + basic monitoring
 
 ## ✅ MVP Definitions (Truth & Safety Rules)
 

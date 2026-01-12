@@ -2,6 +2,38 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+/**
+ * Validates and formats the "from" email address for Resend
+ * Accepts: "email@example.com" or "Name <email@example.com>"
+ * Returns a properly formatted string or the default fallback
+ */
+function getFromEmail(): string {
+  const fromEmail = process.env.RESEND_FROM_EMAIL?.trim();
+  
+  if (!fromEmail) {
+    return "RoadReady <onboarding@resend.dev>";
+  }
+
+  // Check if it's already in "Name <email@example.com>" format
+  const nameEmailMatch = fromEmail.match(/^(.+?)\s*<(.+?)>$/);
+  if (nameEmailMatch) {
+    const [, name, email] = nameEmailMatch;
+    // Validate email format
+    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      return `${name.trim()} <${email.trim()}>`;
+    }
+  }
+
+  // Check if it's just an email address
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fromEmail)) {
+    return fromEmail;
+  }
+
+  // Invalid format - use default and log warning
+  console.warn(`Invalid RESEND_FROM_EMAIL format: "${fromEmail}". Using default.`);
+  return "RoadReady <onboarding@resend.dev>";
+}
+
 export interface EmailAlertParams {
   to: string;
   subject: string;
@@ -22,7 +54,7 @@ export async function sendEmailAlert(params: EmailAlertParams): Promise<{
   error?: string;
 }> {
   if (!process.env.RESEND_API_KEY) {
-    console.error("RESEND_API_KEY not configured");
+    console.warn("RESEND_API_KEY not configured - email will not be sent, but alert will be logged");
     return {
       success: false,
       error: "Email service not configured",
@@ -35,7 +67,7 @@ export async function sendEmailAlert(params: EmailAlertParams): Promise<{
     const textBody = buildEmailText(params);
 
     const { data, error } = await resend.emails.send({
-      from: process.env.RESEND_FROM_EMAIL || "RoadReady <onboarding@resend.dev>",
+      from: getFromEmail(),
       to: params.to,
       subject: params.subject,
       html: htmlBody,
@@ -265,7 +297,7 @@ export async function sendDailyDigest(
     `;
 
     const { data, error } = await resend.emails.send({
-      from: process.env.RESEND_FROM_EMAIL || "RoadReady <onboarding@resend.dev>",
+      from: getFromEmail(),
       to,
       subject,
       html: htmlBody,

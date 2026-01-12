@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/jobs/check-expirations",
+      "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/jobs/retry-failed-alerts",
+      "schedule": "0 * * * *"
+    }
+  ]
+}

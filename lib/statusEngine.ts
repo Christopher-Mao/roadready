@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
  */
 const REQUIRED_DOCUMENTS = {
   driver: ["CDL", "Medical Card"],
-  vehicle: ["Registration", "Insurance"],
+  vehicle: ["Registration", "Insurance", "IRP_CAB_CARD"], // IRP Cab Card is required for vehicles
 } as const;
 
 /**
@@ -41,9 +41,10 @@ export async function calculateEntityStatus(
   const supabase = await createClient();
 
   // Get all documents for this entity
+  // Use expiration_date if available, fallback to expires_on for backward compatibility
   const { data: documents, error } = await supabase
     .from("documents")
-    .select("id, doc_type, expires_on, status")
+    .select("id, doc_type, expires_on, expiration_date, status, processing_status")
     .eq("fleet_id", fleetId)
     .eq("entity_type", entityType)
     .eq("entity_id", entityId);
@@ -81,9 +82,16 @@ export async function calculateEntityStatus(
   const expiringSoonDocs: Array<{ doc_type: string; expires_on: string; days_remaining: number }> = [];
 
   docs.forEach((doc) => {
-    if (!doc.expires_on) return;
+    // Use expiration_date if available, fallback to expires_on
+    const expirationValue = (doc as any).expiration_date || doc.expires_on;
+    if (!expirationValue) return;
 
-    const expirationDate = new Date(doc.expires_on);
+    // Skip documents that are still processing or failed
+    if ((doc as any).processing_status === "processing" || (doc as any).processing_status === "failed") {
+      return; // Don't count processing/failed documents in status calculation
+    }
+
+    const expirationDate = new Date(expirationValue);
     expirationDate.setHours(0, 0, 0, 0);
     const daysUntilExpiration = Math.ceil(
       (expirationDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
@@ -104,7 +112,7 @@ export async function calculateEntityStatus(
       if (isRequired) {
         expiringSoonDocs.push({
           doc_type: doc.doc_type,
-          expires_on: doc.expires_on,
+          expires_on: expirationValue,
           days_remaining: daysUntilExpiration,
         });
       }
